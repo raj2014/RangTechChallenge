@@ -1,0 +1,91 @@
+xgboost_v2
+// only zero and negative -10 counts
+param <- list("objective" = "binary:logistic",
+              "eval_metric" = "error",
+              "booster" = "gbtree",
+              "eta"=0.01,
+              "max.depth"=5,
+              "nthread" = 3,
+              "min_child_weight"=1,
+              "colsample_bytree"=0.9,
+              "subsample"=0.9
+)
+
+
+xgb<-xgb.train(   params              = param, 
+                  data                = dtrain, 
+                  nrounds             = 770, #1500, 
+                  verbose             = TRUE,  #1
+                  #early.stop.round    = 20,
+                  #feval=evalerror,
+                  print.every.n = 20,
+                  watchlist           = watchlist,
+                  maximize            = FALSE
+)
+
+5 fold CV :[1] "AVG CV:  0.3162774 SD CV :  0.000956545764718034" median :0.3160
+Leaderboard CV :0.687802
+-----------------------------------------------------------------------------------------------------------------------------
+
+only with sub1:
+[1] "AVG CV:  0.6843204 SD CV :  0.00171784248404796 Median CV:  0.683924"
+
+all features:
+[1] "AVG CV:  0.6849726 SD CV :  0.00188764146489739 Median CV:  0.683925"
+Public LB : 0.683575
+------------------------------------------------------------------------------------------------------------------------------------
+xgboost_v6
+[1] "AVG CV:  0.6839092 SD CV :  0.00133235306882225 Median CV:  0.683692"
+seed(1)
+included promotion count and promotion sum
+
+0.6881
+param <- list("objective" = "binary:logistic",
+              "eval_metric" = "error",
+              "booster" = "gbtree",
+              "eta"=0.01,
+              "max.depth"=5,
+              "nthread" = 3,
+              "min_child_weight"=1,
+              "colsample_bytree"=0.9,
+              "subsample"=0.9
+)
+
+
+xgb<-xgb.train(   params              = param, 
+                  data                = dtrain, 
+                  nrounds             = 780, #1500, 
+                  verbose             = TRUE,  #1
+                  #early.stop.round    = 20,
+                  #feval=evalerror,
+                  print.every.n = 20,
+                  watchlist           = watchlist,
+                  maximize            = FALSE
+)
+--------------------------------------------------------------------------------------------------------------------------------------
+Consistent cross validation with public LB:
+[1] "AVG CV:  0.6841112 SD CV :  0.000965178843531079 Median CV:  0.684313" cv rounds :820
+
+seed(1)
+LB : 0.6842
+xgb<-xgb.train(   params              = param, 
+                  data                = dtrain, 
+                  nrounds             = 880, #1500, 
+                  verbose             = TRUE,  #1
+                  #early.stop.round    = 20,
+                  #feval=evalerror,
+                  print.every.n = 20,
+                  watchlist           = watchlist,
+                  maximize            = FALSE
+)
+param <- list("objective" = "binary:logistic",
+              "eval_metric" = evalerror,
+              "booster" = "gbtree",
+              "eta"=0.01,
+              "max.depth"=4,
+              "nthread" = 3,
+              "min_child_weight"=1,
+              "colsample_bytree"=0.9,
+              "subsample"=0.9
+)
+---------------------------------------------------------------------------------------------------------------------------------------------
