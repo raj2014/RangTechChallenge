@@ -16,6 +16,7 @@ evalerror <- function(preds, dtrain) {
 train<-read.csv(file="Train.csv",header=TRUE)
 test<-read.csv(file="Test.csv",header=TRUE)
 
+train<-train[complete.cases(train),]
 
 # plots to understand the distribution
 
@@ -24,6 +25,7 @@ test<-read.csv(file="Test.csv",header=TRUE)
 train[is.na(train)] <- -10
 test[is.na(test)]<--10
 
+#length(which(complete.cases(test)==TRUE))
 
 # Getting response variable
 active<-train$Active_Customer
@@ -59,6 +61,8 @@ getZeros<-function(x)
   
 }
 
+
+
 df_matrix<-model.matrix(~.-1,data=df)
 
 
@@ -70,7 +74,7 @@ param <- list("objective" = "binary:logistic",
               "eval_metric" = evalerror,
               "booster" = "gbtree",
               "eta"=0.01,
-              "max.depth"=4,
+              "max.depth"=5,
               "nthread" = 3,
               "min_child_weight"=1,
               "colsample_bytree"=0.9,
@@ -85,7 +89,7 @@ for (i in seeds)
   
 {
   set.seed(i)
-  k<-xgb.cv(params=param,nrounds=820,data=df_matrix[c(1:trainrowCount),],nfold=5,
+  k<-xgb.cv(params=param,nrounds=870,data=df_matrix[c(1:trainrowCount),],nfold=5,
             label=active,
             feval=evalerror,
             #metrics={'error'},
@@ -108,7 +112,7 @@ watchlist<-list(train=dtrain)
 
 xgb<-xgb.train(   params              = param, 
                   data                = dtrain, 
-                  nrounds             = 850, #1500, 
+                  nrounds             = 950, #1500, 
                   verbose             = TRUE,  #1
                   #early.stop.round    = 20,
                   #feval=evalerror,
@@ -117,7 +121,7 @@ xgb<-xgb.train(   params              = param,
                   maximize            = FALSE
 )
 
-y_pred <- predict(xgb, data.matrix(df_matrix[-c(1:trainrowCount),]),ntreelimit=850)
+y_pred <- predict(xgb, data.matrix(df_matrix[-c(1:trainrowCount),]),ntreelimit=700)
 
 # Keeping  threshold as 0.5
 k<-which(y_pred>0.5)

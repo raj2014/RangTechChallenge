@@ -137,8 +137,7 @@ for (i in 1:ncol(df_matrix))
 }
 
 
-# get the inde of the column names which have promotion as name
-
+# get the index of the column names which have promotion as name
 prom_index<-grep("Promotion",colnames(df),value = FALSE)
 
 for (i in prom_index)
@@ -160,3 +159,41 @@ df<-cbind(df,zerocounts=apply(df[,prom_index],1,getZeros))
 df<-cbind(df,sum_prom=apply(df[,prom_index],1,sum))
 
 
+# doing the same for Food columns
+food_index<-grep("Food",colnames(df),value = FALSE)
+df<-cbind(df,zerofoodcounts=apply(df[,food_index],1,getZeros))
+food_log<-scale(df[,food_index],scale=TRUE,center=TRUE)
+
+df<-cbind(df,sum_food=apply(food_log,1,sum))
+
+
+# Clustering for food columns
+library(lsa)
+food_index<-grep("Food",colnames(df),value = FALSE)
+food_log<-scale(df[,food_index],scale=TRUE,center=TRUE)
+food_cor<-cosine(as.matrix(food_log))
+rownames(food_cor)<-food_index
+food_cor<-1-food_cor
+set.seed(1)
+foodCluster<-kmeans(food_cor,centers=20, iter.max = 1000, nstart = 100,algorithm = c("Lloyd"), trace=TRUE)
+clusterLink<-data.frame(col_index=strtoi(rownames(food_cor)),foodCluster$cluster)
+
+food_matrix=matrix(0,nrow=nrow(df),ncol=20)
+
+getsum<-function(x)
+{
+  
+   x<-x[x!=-10]
+   sum(x)
+}
+
+for (i in 1:20)
+{
+  v<-clusterLink[clusterLink$foodCluster.cluster==i,"col_index"]
+  if(length(v)>0)
+  {
+    food_matrix[,i]<-apply(df[,v],1,getsum)
+  }
+}
+
+df_matrix<-cbind(df_matrix,food_matrix)
