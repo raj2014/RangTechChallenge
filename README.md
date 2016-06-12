@@ -7,7 +7,7 @@ A simple xgboost model with a few engineered features scores 9th position on pri
 
 
     Important Script files:  xgboost_v1.R  -  Main script that scores 0.6883 on privatelb  
-                             xgboost_v6.R  -  Submission that scores the 0.6883 on privatelb  
+                             xgboost_v6.csv  -  Submission that scores the 0.6883 on privatelb  
                              
 
 
