@@ -1,6 +1,7 @@
 
 rm(list=ls())
 library(xgboost)
+library(caret)
 setwd("E:/Kaggle/RangTech_Challenge")
 
 # custom metric
@@ -16,9 +17,7 @@ evalerror <- function(preds, dtrain) {
 train<-read.csv(file="Train.csv",header=TRUE)
 test<-read.csv(file="Test.csv",header=TRUE)
 
-train<-train[complete.cases(train),]
 
-# plots to understand the distribution
 
 
 # train<-train[which(train$Cust_Tenure>=0),]
@@ -61,14 +60,39 @@ getZeros<-function(x)
   
 }
 
+# get the index of the column names which have promotion as name
+prom_index<-grep("Promotion",colnames(df),value = FALSE)
+
+#getsum function
+getsum<-function(x)
+{
+  
+  x<-x[x!=-10]
+  sum(x)
+}
+
+getthresholdLimits<-function(x)
+{
+  x<-x[x>0.5]
+  length(x)
+}
 
 
-df_matrix<-model.matrix(~.-1,data=df)
 
 
 
+df<-cbind(df,zerocounts=apply(df[,prom_index],1,getZeros))
+df<-cbind(df,sum_prom=apply(df[,prom_index],1,getsum))
+# df<-cbind(df,threshold_prom=apply(df[,prom_index],1,getthresholdLimits))
+
+
+
+#df_matrix<-model.matrix(~.-1,data=df)
+dummies<-dummyVars(~.,data=df)
+df_matrix<-predict(dummies,newdata=df)
 df_matrix<-cbind(df_matrix,negones=apply(df_matrix,1,getOnes))
 df_matrix<-cbind(df_matrix,negcounts=apply(df_matrix,1,getZeros))
+
 
 param <- list("objective" = "binary:logistic",
               "eval_metric" = evalerror,
@@ -83,17 +107,18 @@ param <- list("objective" = "binary:logistic",
 
 
 
-seeds<-c(1,2,3,4,5)
+# 10 fold cross validation repeat for 3 different seeds
+seeds<-c(1,2,3)
 avg_cv<-c()
 for (i in seeds)
   
 {
   set.seed(i)
-  k<-xgb.cv(params=param,nrounds=870,data=df_matrix[c(1:trainrowCount),],nfold=5,
+  k<-xgb.cv(params=param,nrounds=780,data=df_matrix[c(1:trainrowCount),],nfold=10,
             label=active,
             feval=evalerror,
             #metrics={'error'},
-            print.every.n = 50,
+            print.every.n = 30,
             verbose=TRUE,
             showsd=FALSE,
             maximize=FALSE)
@@ -101,6 +126,8 @@ for (i in seeds)
   avg_cv<-append(avg_cv,unlist(k[nrow(k),"test.error.mean",with=FALSE]))
 }
 paste("AVG CV: ",mean(avg_cv),"SD CV : ",sd(avg_cv),"Median CV: ",median(avg_cv))
+
+
 
 
 
@@ -112,7 +139,7 @@ watchlist<-list(train=dtrain)
 
 xgb<-xgb.train(   params              = param, 
                   data                = dtrain, 
-                  nrounds             = 950, #1500, 
+                  nrounds             = 780, #1500, 
                   verbose             = TRUE,  #1
                   #early.stop.round    = 20,
                   #feval=evalerror,
@@ -121,10 +148,13 @@ xgb<-xgb.train(   params              = param,
                   maximize            = FALSE
 )
 
-y_pred <- predict(xgb, data.matrix(df_matrix[-c(1:trainrowCount),]),ntreelimit=700)
+xgbimp<-xgb.importance(colnames(df_matrix),model=xgb)
+
+y_pred <- predict(xgb, data.matrix(df_matrix[-c(1:trainrowCount),]))
+
 
 # Keeping  threshold as 0.5
-k<-which(y_pred>0.5)
+k<-which(y_pred>=0.5)
 y_pred[k]<-1
 y_pred[-k]<-0
 
